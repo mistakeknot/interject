@@ -77,8 +77,14 @@ class Scanner:
         Returns summary stats.
         """
         if since is None:
-            # Default: look back 24 hours, or since last scan
-            since = datetime.utcnow() - timedelta(hours=24)
+            # Use last scan time if available, otherwise look back 7 days.
+            # arXiv publishes in batches with multi-day delays, so 24h is
+            # too narrow and routinely returns 0 results.
+            last_scan = self.db.get_last_scan_time()
+            if last_scan:
+                since = last_scan
+            else:
+                since = datetime.utcnow() - timedelta(days=7)
 
         adapters = self._load_adapters()
         if not adapters:
@@ -201,14 +207,18 @@ class Scanner:
         source_cfg = get_source_config(self.config, source_name)
 
         try:
-            mod = importlib.import_module(f"sources.{source_name}")
+            mod = importlib.import_module(f"interject.sources.{source_name}")
             adapter_cls = getattr(mod, class_name)
             adapter = adapter_cls(config=source_cfg)
         except Exception as e:
             return {"error": f"Failed to load adapter: {e}"}
 
         if since is None:
-            since = datetime.utcnow() - timedelta(hours=24)
+            last_scan = self.db.get_last_scan_time(source_name)
+            if last_scan:
+                since = last_scan
+            else:
+                since = datetime.utcnow() - timedelta(days=7)
 
         topics = get_seed_topics(self.config)
         self.engine.ensure_profile()

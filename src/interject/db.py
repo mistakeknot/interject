@@ -314,6 +314,21 @@ class InterjectDB:
         ).fetchone()
         return dict(row) if row else None
 
+    def get_last_scan_time(self, source: str | None = None) -> datetime | None:
+        """Get the most recent scan timestamp, optionally filtered by source."""
+        if source:
+            row = self.conn.execute(
+                "SELECT MAX(scanned_at) as t FROM scan_log WHERE source = ?",
+                (source,),
+            ).fetchone()
+        else:
+            row = self.conn.execute(
+                "SELECT MAX(scanned_at) as t FROM scan_log"
+            ).fetchone()
+        if row and row["t"]:
+            return datetime.fromisoformat(row["t"])
+        return None
+
     def get_scan_stats(self) -> list[dict]:
         """Get last scan time and counts per source."""
         rows = self.conn.execute(
