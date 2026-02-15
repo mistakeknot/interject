@@ -11,7 +11,7 @@ import aiohttp
 
 from .base import EnrichedDiscovery, RawDiscovery
 
-ARXIV_API = "http://export.arxiv.org/api/query"
+ARXIV_API = "https://export.arxiv.org/api/query"
 ATOM_NS = "{http://www.w3.org/2005/Atom}"
 
 
@@ -28,11 +28,13 @@ class ArxivAdapter:
         self, since: datetime, topics: list[str]
     ) -> list[RawDiscovery]:
         """Fetch recent papers matching categories and topics."""
-        # Build query: categories OR'd, with topic keywords
+        # Build query: categories OR'd, optionally with topic keywords
+        # Keep queries simple — arXiv API is fragile with complex boolean expressions
         cat_query = " OR ".join(f"cat:{c}" for c in self.categories)
         if topics:
-            topic_query = " OR ".join(f'all:"{t}"' for t in topics[:10])
-            query = f"({cat_query}) AND ({topic_query})"
+            # Keep topic query simple — just category filter
+            # Topics will be used for post-filtering via the embedding engine
+            query = cat_query
         else:
             query = cat_query
 
@@ -45,8 +47,13 @@ class ArxivAdapter:
         }
 
         async with aiohttp.ClientSession() as session:
+            # Courtesy delay before hitting arXiv API
+            await asyncio.sleep(self.courtesy_delay)
             async with session.get(ARXIV_API, params=params) as resp:
                 text = await resp.text()
+                # arXiv sometimes returns HTML error pages instead of XML
+                if resp.status != 200 or not text.strip().startswith("<?xml"):
+                    return []
 
         return self._parse_feed(text, since)
 
