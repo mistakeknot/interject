@@ -35,3 +35,11 @@ if [[ "$COUNT" -gt 0 ]]; then
         echo "Run /interject:inbox to review"
     fi
 fi
+
+# Record session start for cross-session pattern detection
+SESSION_ID=$(echo "$SESSION_JSON" | python3 -c "import sys,json; print(json.load(sys.stdin).get('session_id',''))" 2>/dev/null || echo "")
+if [[ -n "$SESSION_ID" ]]; then
+    sqlite3 "$INTERJECT_DB" \
+        "INSERT OR IGNORE INTO query_log (query_text, session_id) VALUES ('session_start', '$SESSION_ID')" \
+        2>/dev/null || true
+fi

@@ -194,6 +194,16 @@ class Scanner:
         # Adapt thresholds based on accumulated feedback
         self.engine.adapt_thresholds()
 
+        # Scan for bead lifecycle updates
+        from .feedback import FeedbackCollector
+
+        collector = FeedbackCollector(self.db)
+        feedback_count = collector.scan_bead_updates()
+        if feedback_count > 0:
+            logger.info("Recorded %d new feedback signals", feedback_count)
+            self.engine.update_source_weights_from_feedback()
+        results["feedback_signals"] = feedback_count
+
         return results
 
     async def scan_source(

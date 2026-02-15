@@ -151,6 +151,31 @@ def create_server(config: dict | None = None) -> tuple[Server, dict]:
                     "required": ["query"],
                 },
             ),
+            Tool(
+                name="interject_session_context",
+                description="Get discoveries relevant to the current session topic via embedding similarity.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "topic": {
+                            "type": "string",
+                            "description": "Current session topic text to match against new discoveries.",
+                        },
+                    },
+                },
+            ),
+            Tool(
+                name="interject_record_query",
+                description="Record a query for cross-session pattern detection and topic boosting.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string"},
+                        "session_id": {"type": "string"},
+                    },
+                    "required": ["query"],
+                },
+            ),
         ]
 
     @server.call_tool()
@@ -172,6 +197,10 @@ def create_server(config: dict | None = None) -> tuple[Server, dict]:
                 result = await _handle_status(arguments)
             elif name == "interject_search":
                 result = await _handle_search(arguments)
+            elif name == "interject_session_context":
+                result = await _handle_session_context(arguments)
+            elif name == "interject_record_query":
+                result = await _handle_record_query(arguments)
             else:
                 result = {"error": f"Unknown tool: {name}"}
         except Exception as e:
@@ -384,6 +413,45 @@ def create_server(config: dict | None = None) -> tuple[Server, dict]:
                 for sim, d in scored[:limit]
             ],
         }
+
+    async def _handle_session_context(args: dict) -> str:
+        topic = args.get("topic", "")
+        if not topic:
+            return "No topic provided. Use interject_inbox for global top discoveries."
+
+        from .embeddings import bytes_to_vector
+
+        embedding = embedder.embed(topic)
+        discoveries = db.list_discoveries(status="new", limit=100)
+        scored = []
+        for discovery in discoveries:
+            if discovery.get("embedding"):
+                vec = bytes_to_vector(discovery["embedding"])
+                sim = embedder.cosine_similarity(embedding, vec)
+                if sim > 0.3:
+                    scored.append((sim, discovery))
+
+        scored.sort(key=lambda item: item[0], reverse=True)
+        if not scored:
+            return "No relevant discoveries for this topic."
+
+        lines = [f"Discoveries relevant to: {topic[:80]}"]
+        for sim, discovery in scored[:5]:
+            lines.append(
+                f"- [{discovery['source']}] {discovery['title']} (relevance: {sim:.2f})"
+            )
+            lines.append(f"  {discovery.get('url', '')}")
+        return "\n".join(lines)
+
+    async def _handle_record_query(args: dict) -> str:
+        query = args["query"]
+        session_id = args.get("session_id", "")
+
+        from .feedback import FeedbackCollector
+
+        collector = FeedbackCollector(db)
+        collector.record_query(query, session_id=session_id)
+        return f"Recorded query: {query[:80]}"
 
     return server, ctx
 

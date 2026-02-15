@@ -241,6 +241,27 @@ class RecommendationEngine:
             self.high_threshold, self.medium_threshold, promotion_rate,
         )
 
+    def update_source_weights_from_feedback(self) -> None:
+        """Adjust source weights based on conversion rates from feedback signals."""
+        from .feedback import FeedbackCollector
+
+        collector = FeedbackCollector(self.db)
+        rates = collector.get_source_conversion_rates()
+
+        profile = self.db.get_profile()
+        source_weights = profile.get("source_weights", {})
+
+        for source, data in rates.items():
+            promoted = data.get("promoted", 0)
+            shipped = data.get("shipped", 0)
+            if promoted >= 3:  # Need enough data
+                conversion = shipped / promoted if promoted > 0 else 0
+                current = source_weights.get(source, 1.0)
+                adjustment = 0.1 * (conversion - 0.3)  # 0.3 is baseline
+                source_weights[source] = max(0.3, min(2.0, current + adjustment))
+
+        self.db.update_profile(source_weights=source_weights)
+
     def get_embedding(self, text: str) -> bytes:
         """Get embedding bytes for a text string."""
         vec = self.embedder.embed(text)

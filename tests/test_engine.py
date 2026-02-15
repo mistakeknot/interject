@@ -165,3 +165,29 @@ class TestEnsureProfile:
         engine.ensure_profile()
         profile = db.get_profile()
         assert profile.get("topic_vector") is not None
+
+
+class TestFeedbackScoring:
+    def test_source_weight_from_conversion(self, engine, db):
+        """Sources with higher shipped conversion should score higher."""
+        # Insert discoveries and promote them
+        for i in range(5):
+            db.insert_discovery(
+                id=f"ij-gh-{i}", source="github", source_id=f"gh{i}",
+                title=f"GH Tool {i}", relevance_score=0.7,
+            )
+            db.record_promotion(f"ij-gh-{i}", f"iv-{i}", 2)
+
+        # Ship 3 of the 5
+        for i in range(3):
+            db.insert_feedback_signal(
+                discovery_id=f"ij-gh-{i}",
+                signal_type="bead_shipped",
+                signal_data="{}",
+            )
+
+        engine.update_source_weights_from_feedback()
+        profile = db.get_profile()
+        gh_weight = profile.get("source_weights", {}).get("github", 1.0)
+        # 3/5 = 60% conversion, above 30% baseline, so weight should increase
+        assert gh_weight > 1.0
