@@ -1,0 +1,8 @@
+# Interject ambient discovery scanner — runs every 6 hours
+# Install: cp this file to /etc/cron.d/interject
+SHELL=/bin/bash
+PATH=/root/.local/bin:/usr/local/bin:/usr/bin:/bin
+HOME=/root
+EXA_API_KEY=eba9629f-75e9-467c-8912-a86b3ea8d678
+
+0 */6 * * * root /root/.local/bin/uv run --directory /root/projects/Interverse/plugins/interject interject-scan >> /var/log/interject-scan.log 2>&1

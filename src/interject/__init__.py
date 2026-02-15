@@ -1,3 +1,1 @@
-"""Interject — Ambient discovery and research engine."""
-
-__version__ = "0.1.0"
+"""Pluggable source adapters for Interject."""

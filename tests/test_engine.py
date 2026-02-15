@@ -10,7 +10,8 @@ import pytest
 from interject.config import load_config
 from interject.db import InterjectDB
 from interject.embeddings import EmbeddingClient, vector_to_bytes
-from interject.engine import EMBEDDING_DIM, RecommendationEngine
+from interject.embeddings import EMBEDDING_DIM
+from interject.engine import RecommendationEngine
 
 
 @pytest.fixture

@@ -11,3 +11,4 @@ ExecStart=/root/.local/bin/uv run --directory /root/projects/Interverse/plugins/
 TimeoutStartSec=600
 Environment=HOME=/root
 Environment=PATH=/root/.local/bin:/usr/local/bin:/usr/bin:/bin
+Environment=EXA_API_KEY=eba9629f-75e9-467c-8912-a86b3ea8d678

@@ -22,11 +22,11 @@ logger = logging.getLogger(__name__)
 
 # Map adapter module names to their classes
 ADAPTER_CLASSES = {
-    "arxiv": ("sources.arxiv", "ArxivAdapter"),
-    "hackernews": ("sources.hackernews", "HackerNewsAdapter"),
-    "github": ("sources.github", "GitHubAdapter"),
-    "anthropic": ("sources.anthropic", "AnthropicAdapter"),
-    "exa": ("sources.exa", "ExaAdapter"),
+    "arxiv": ("interject.sources.arxiv", "ArxivAdapter"),
+    "hackernews": ("interject.sources.hackernews", "HackerNewsAdapter"),
+    "github": ("interject.sources.github", "GitHubAdapter"),
+    "anthropic": ("interject.sources.anthropic", "AnthropicAdapter"),
+    "exa": ("interject.sources.exa", "ExaAdapter"),
 }
 
 
@@ -61,7 +61,7 @@ class Scanner:
 
             try:
                 # Import relative to the sources package
-                mod = importlib.import_module(f"sources.{name}")
+                mod = importlib.import_module(f"interject.sources.{name}")
                 adapter_cls = getattr(mod, class_name)
                 adapter = adapter_cls(config=source_cfg)
                 adapters.append(adapter)
@@ -247,8 +247,8 @@ class Scanner:
             return {"error": str(e)}
 
 
-async def run_daemon(config: dict | None = None) -> None:
-    """Run the scanner as a daemon loop."""
+async def run_once(config: dict | None = None) -> dict:
+    """Run a single scan across all sources and exit."""
     if config is None:
         config = load_config()
 
@@ -258,29 +258,26 @@ async def run_daemon(config: dict | None = None) -> None:
     engine = RecommendationEngine(db, embedder, config)
     scanner = Scanner(db, engine, embedder, config)
 
-    daemon_cfg = get_daemon_config(config)
-    interval_hours = daemon_cfg.get("scan_interval_hours", 6)
-
-    logger.info("Interject daemon starting (interval: %dh)", interval_hours)
-
-    while True:
-        try:
-            results = await scanner.scan_all()
-            logger.info(
-                "Scan complete: %d found, %d scored",
-                results.get("total_found", 0),
-                results.get("total_scored", 0),
-            )
-        except Exception as e:
-            logger.error("Daemon scan failed: %s", e)
-
-        await asyncio.sleep(interval_hours * 3600)
+    logger.info("Interject scan starting (one-shot)")
+    try:
+        results = await scanner.scan_all()
+        logger.info(
+            "Scan complete: %d found, %d scored",
+            results.get("total_found", 0),
+            results.get("total_scored", 0),
+        )
+        return results
+    except Exception as e:
+        logger.error("Scan failed: %s", e)
+        return {"error": str(e)}
+    finally:
+        db.close()
 
 
 def main() -> None:
-    """CLI entry point for the daemon."""
+    """CLI entry point — runs a single scan and exits."""
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
     )
-    asyncio.run(run_daemon())
+    asyncio.run(run_once())
