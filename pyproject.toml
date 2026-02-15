@@ -6,7 +6,6 @@ build-backend = "hatchling.build"
 name = "interject"
 version = "0.1.0"
 description = "Ambient discovery and research engine — scans arXiv, HN, GitHub, Anthropic docs for new capabilities"
-readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 authors = [

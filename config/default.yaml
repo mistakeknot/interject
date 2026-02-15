@@ -75,6 +75,17 @@ sources:
     check_changelog: true
     check_docs: true
 
+  exa:
+    enabled: true
+    max_results: 30
+    use_autoprompt: true
+    search_queries:
+      - new MCP server tools for AI agents
+      - Claude Code plugin development
+      - multi-agent orchestration framework
+      - code analysis LLM tooling
+      - developer workflow automation AI
+
 # Interest profile seed topics (used until enough feedback exists)
 seed_topics:
   - MCP servers

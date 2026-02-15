@@ -1,0 +1,13 @@
+[Unit]
+Description=Interject ambient discovery scanner
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/root/projects/Interverse/plugins/interject
+ExecStart=/root/.local/bin/uv run --directory /root/projects/Interverse/plugins/interject interject-scan
+TimeoutStartSec=600
+Environment=HOME=/root
+Environment=PATH=/root/.local/bin:/usr/local/bin:/usr/bin:/bin
