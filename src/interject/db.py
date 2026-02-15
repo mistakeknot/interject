@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS discoveries (
@@ -53,6 +53,26 @@ CREATE TABLE IF NOT EXISTS scan_log (
     items_above_threshold INTEGER NOT NULL DEFAULT 0
 );
 
+CREATE TABLE IF NOT EXISTS feedback_signals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    discovery_id TEXT REFERENCES discoveries(id),
+    signal_type TEXT NOT NULL,
+    signal_data TEXT NOT NULL DEFAULT '{}',
+    session_id TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_feedback_discovery ON feedback_signals(discovery_id);
+CREATE INDEX IF NOT EXISTS idx_feedback_type ON feedback_signals(signal_type);
+
+CREATE TABLE IF NOT EXISTS query_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    query_text TEXT NOT NULL,
+    query_embedding BLOB,
+    session_id TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS schema_info (
     version INTEGER NOT NULL
 );
@@ -63,6 +83,28 @@ CREATE INDEX IF NOT EXISTS idx_discoveries_score ON discoveries(relevance_score 
 CREATE INDEX IF NOT EXISTS idx_discoveries_tier ON discoveries(confidence_tier);
 CREATE INDEX IF NOT EXISTS idx_discoveries_discovered ON discoveries(discovered_at DESC);
 CREATE INDEX IF NOT EXISTS idx_scan_log_source ON scan_log(source, scanned_at DESC);
+"""
+
+MIGRATION_V1_TO_V2_SQL = """
+CREATE TABLE IF NOT EXISTS feedback_signals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    discovery_id TEXT REFERENCES discoveries(id),
+    signal_type TEXT NOT NULL,
+    signal_data TEXT NOT NULL DEFAULT '{}',
+    session_id TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_feedback_discovery ON feedback_signals(discovery_id);
+CREATE INDEX IF NOT EXISTS idx_feedback_type ON feedback_signals(signal_type);
+
+CREATE TABLE IF NOT EXISTS query_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    query_text TEXT NOT NULL,
+    query_embedding BLOB,
+    session_id TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
 """
 
 
@@ -94,7 +136,8 @@ class InterjectDB:
         return self._conn
 
     def _init_schema(self) -> None:
-        cur = self.conn.executescript(SCHEMA_SQL)
+        self.conn.executescript(SCHEMA_SQL)
+        needs_commit = False
         # Check/set schema version
         row = self.conn.execute(
             "SELECT version FROM schema_info LIMIT 1"
@@ -103,7 +146,13 @@ class InterjectDB:
             self.conn.execute(
                 "INSERT INTO schema_info (version) VALUES (?)", (SCHEMA_VERSION,)
             )
-            self.conn.commit()
+            needs_commit = True
+        elif row["version"] == 1:
+            self.conn.executescript(MIGRATION_V1_TO_V2_SQL)
+            self.conn.execute(
+                "UPDATE schema_info SET version = ?", (SCHEMA_VERSION,)
+            )
+            needs_commit = True
         # Seed empty interest profile if missing
         row = self.conn.execute(
             "SELECT id FROM interest_profile WHERE id = 1"
@@ -113,6 +162,8 @@ class InterjectDB:
                 "INSERT INTO interest_profile (id, keyword_weights, source_weights) "
                 "VALUES (1, '{}', '{}')"
             )
+            needs_commit = True
+        if needs_commit:
             self.conn.commit()
 
     # ── Discovery CRUD ──────────────────────────────────────────────
@@ -255,6 +306,53 @@ class InterjectDB:
     def get_promotions(self, limit: int = 100) -> list[dict]:
         rows = self.conn.execute(
             "SELECT * FROM promotions ORDER BY promoted_at DESC LIMIT ?", (limit,)
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    # ── Feedback ────────────────────────────────────────────────────
+
+    def insert_feedback_signal(
+        self,
+        discovery_id: str,
+        signal_type: str,
+        signal_data: str = "{}",
+        session_id: str | None = None,
+    ) -> None:
+        self.conn.execute(
+            """INSERT INTO feedback_signals
+               (discovery_id, signal_type, signal_data, session_id)
+               VALUES (?, ?, ?, ?)""",
+            (discovery_id, signal_type, signal_data, session_id),
+        )
+        self.conn.commit()
+
+    def get_feedback_signals(self, discovery_id: str) -> list[dict]:
+        rows = self.conn.execute(
+            """SELECT * FROM feedback_signals
+               WHERE discovery_id = ?
+               ORDER BY created_at ASC, id ASC""",
+            (discovery_id,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def insert_query_log(
+        self,
+        query_text: str,
+        query_embedding: bytes | None = None,
+        session_id: str | None = None,
+    ) -> None:
+        self.conn.execute(
+            """INSERT INTO query_log
+               (query_text, query_embedding, session_id)
+               VALUES (?, ?, ?)""",
+            (query_text, query_embedding, session_id),
+        )
+        self.conn.commit()
+
+    def get_query_log(self, limit: int = 1000) -> list[dict]:
+        rows = self.conn.execute(
+            "SELECT * FROM query_log ORDER BY created_at DESC, id DESC LIMIT ?",
+            (limit,),
         ).fetchall()
         return [dict(r) for r in rows]
 
