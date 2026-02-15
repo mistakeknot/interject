@@ -1,0 +1,88 @@
+# Interject default configuration
+
+# Database location
+db_path: ~/.interject/interject.db
+
+# Daemon settings
+daemon:
+  scan_interval_hours: 6
+  stagger_seconds: 30  # delay between adapter runs
+
+# Engine settings
+engine:
+  # Confidence tier thresholds (adaptive — shift based on promotion rate)
+  high_threshold: 0.8
+  medium_threshold: 0.5
+  low_threshold: 0.2
+  # Decay
+  decay_rate: 0.95  # multiplied daily for unreviewed discoveries
+  decay_floor: 0.1  # below this, status flips to "decayed"
+  # Learning weights
+  priority_weights:
+    0: 5.0  # P0 promotions update profile 5x
+    1: 4.0
+    2: 3.0
+    3: 2.0
+    4: 1.0
+  # Recency boost (1.0 at day 0, decays to this over 7 days)
+  recency_floor: 0.8
+  # Gap detection bonus
+  gap_bonus: 0.3
+
+# Session hook
+session:
+  # Only surface discoveries above this score
+  # (overridden by adaptive threshold after enough feedback)
+  min_score: 0.8
+  max_items: 5
+
+# Source adapter defaults
+sources:
+  arxiv:
+    enabled: true
+    categories:
+      - cs.AI
+      - cs.SE
+      - cs.MA
+      - cs.CL
+    max_results: 50
+    courtesy_delay_seconds: 3
+
+  hackernews:
+    enabled: true
+    min_points: 10
+    max_results: 50
+    keywords:
+      - MCP
+      - Claude
+      - agent
+      - LLM tooling
+      - code analysis
+
+  github:
+    enabled: true
+    min_stars: 5
+    max_results: 50
+    topics:
+      - mcp-server
+      - claude-code
+      - ai-agent
+      - code-analysis
+      - llm-tools
+
+  anthropic:
+    enabled: true
+    check_changelog: true
+    check_docs: true
+
+# Interest profile seed topics (used until enough feedback exists)
+seed_topics:
+  - MCP servers
+  - agent coordination
+  - code analysis
+  - Claude Code plugins
+  - multi-agent systems
+  - TUI frameworks
+  - embedding models
+  - developer tooling
+  - workflow automation

@@ -1,0 +1,42 @@
+{
+  "name": "interject",
+  "version": "0.1.0",
+  "description": "Ambient discovery and research engine. Continuously scans arXiv, Hacker News, GitHub, and Anthropic docs for new capabilities, workflows, and tools relevant to your engineering ecosystem. Creates beads with briefings and draft plans based on a learned recommendation model.",
+  "author": {
+    "name": "MK",
+    "email": "mistakeknot@vibeguider.org"
+  },
+  "repository": "https://github.com/mistakeknot/interject",
+  "homepage": "https://github.com/mistakeknot/interject#readme",
+  "license": "MIT",
+  "keywords": [
+    "research",
+    "discovery",
+    "recommendation",
+    "ambient-scanning",
+    "arxiv",
+    "hackernews",
+    "mcp-server"
+  ],
+  "skills": [
+    "./skills/scan.md",
+    "./skills/discover.md",
+    "./skills/inbox.md",
+    "./skills/profile.md",
+    "./skills/status.md"
+  ],
+  "commands": [],
+  "hooks": "./hooks/hooks.json",
+  "mcpServers": {
+    "interject": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "${CLAUDE_PLUGIN_ROOT}",
+        "interject-mcp"
+      ]
+    }
+  }
+}
