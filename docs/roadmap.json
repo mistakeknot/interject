@@ -1,0 +1,15 @@
+{
+  "module_summary": "Interject provides ambient discovery and research execution services for agent workflows.",
+  "roadmap": {
+    "now": [
+      {"id": "IINJ-N1", "title": "Increase discovery relevance for high-signal sources and reduce noisy suggestions.", "priority": "P1"}
+    ],
+    "next": [
+      {"id": "IINJ-N2", "title": "Align ranking signals with Clavain sprint phases and gate requirements.", "priority": "P2"},
+      {"id": "IINJ-N3", "title": "Publish structured evidence provenance for each injected research result.", "priority": "P2"},
+      {"id": "IINJ-L1", "title": "Add adaptive query templates by domain profile and decision type.", "priority": "P2"}
+    ],
+    "later": [
+    ]
+  }
+}

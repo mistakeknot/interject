@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "interject"
-version = "0.1.3"
+version = "0.1.4"
 description = "Ambient discovery and research engine — scans arXiv, HN, GitHub, Anthropic docs for new capabilities"
 license = "MIT"
 requires-python = ">=3.10"
