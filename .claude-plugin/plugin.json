@@ -19,14 +19,8 @@
     "mcp-server"
   ],
   "skills": [
-    "./skills/scan.md",
-    "./skills/discover.md",
-    "./skills/inbox.md",
-    "./skills/profile.md",
-    "./skills/status.md"
+    "./skills"
   ],
-  "commands": [],
-  "hooks": "./hooks/hooks.json",
   "mcpServers": {
     "interject": {
       "type": "stdio",
