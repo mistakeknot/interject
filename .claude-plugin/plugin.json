@@ -32,7 +32,7 @@
         "interject-mcp"
       ],
       "env": {
-        "EXA_API_KEY": "eba9629f-75e9-467c-8912-a86b3ea8d678"
+        "EXA_API_KEY": "${EXA_API_KEY}"
       }
     }
   },
