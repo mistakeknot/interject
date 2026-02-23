@@ -35,6 +35,5 @@
         "EXA_API_KEY": "${EXA_API_KEY}"
       }
     }
-  },
-  "hooks": "./hooks/hooks.json"
+  }
 }
