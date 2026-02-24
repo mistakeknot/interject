@@ -21,16 +21,12 @@
   "skills": [
     "./skills"
   ],
+  "hooks": "./hooks/hooks.json",
   "mcpServers": {
     "interject": {
       "type": "stdio",
-      "command": "uv",
-      "args": [
-        "run",
-        "--directory",
-        "${CLAUDE_PLUGIN_ROOT}",
-        "interject-mcp"
-      ],
+      "command": "${CLAUDE_PLUGIN_ROOT}/bin/launch-mcp.sh",
+      "args": [],
       "env": {
         "EXA_API_KEY": "${EXA_API_KEY}"
       }
