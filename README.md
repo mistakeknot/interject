@@ -12,6 +12,14 @@ High-relevance discoveries get promoted to brainstorm docs and beads. Medium rel
 
 ## Installation
 
+First, add the [interagency marketplace](https://github.com/mistakeknot/interagency-marketplace) (one-time setup):
+
+```bash
+/plugin marketplace add mistakeknot/interagency-marketplace
+```
+
+Then install the plugin:
+
 ```bash
 /plugin install interject
 ```
