@@ -20,7 +20,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "intersearch @ file:///root/projects/Interverse/plugins/intersearch",
+    "intersearch @ file:///home/mk/projects/Demarch/interverse/intersearch",
     "mcp>=1.0.0",
     "aiohttp>=3.9",
     "pyyaml>=6.0",
