@@ -2,11 +2,11 @@
 
 Ambient discovery and research engine for Claude Code.
 
-## What This Does
+## What this does
 
 interject continuously scans arXiv, Hacker News, GitHub, Anthropic docs, and Exa for new capabilities, tools, and research relevant to your projects. It builds a learned interest profile from your promote/dismiss signals and gets better at surfacing relevant discoveries over time.
 
-When something interesting turns up, it creates a briefing with context about why it matters for your specific projects — not just "here's a new paper" but "here's a new paper and here's how it relates to the embedding infrastructure you're building in intersearch."
+When something interesting turns up, it creates a briefing with context about why it matters for your specific projects: not just "here's a new paper" but "here's a new paper and here's how it relates to the embedding infrastructure you're building in intersearch."
 
 High-relevance discoveries get promoted to brainstorm docs and beads. Medium relevance gets briefings. Everything else goes in the digest. The confidence tiering means you're not drowning in noise.
 
