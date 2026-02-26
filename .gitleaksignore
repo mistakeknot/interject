@@ -1,0 +1,4 @@
+# EXA_API_KEY in deployment configs — key rotated, historical commits
+b67f2474f9a05a000b9d196bea5b3526c17eb7d3:.claude-plugin/plugin.json:generic-api-key:41
+6a2fda12c67a7fa470cef0b4b5b51b4700bb303c:config/interject-scan.service:generic-api-key:14
+6a2fda12c67a7fa470cef0b4b5b51b4700bb303c:config/interject-cron:generic-api-key:6
