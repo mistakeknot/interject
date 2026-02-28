@@ -19,7 +19,11 @@
     "mcp-server"
   ],
   "skills": [
-    "./skills"
+    "./skills/discover",
+    "./skills/inbox",
+    "./skills/profile",
+    "./skills/scan",
+    "./skills/status"
   ],
   "mcpServers": {
     "interject": {
