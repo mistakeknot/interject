@@ -27,6 +27,11 @@ ADAPTER_CLASSES = {
     "github": ("interject.sources.github", "GitHubAdapter"),
     "anthropic": ("interject.sources.anthropic", "AnthropicAdapter"),
     "exa": ("interject.sources.exa", "ExaAdapter"),
+    "tavily": ("interject.sources.tavily", "TavilyAdapter"),
+    "brave": ("interject.sources.brave", "BraveAdapter"),
+    "pubmed": ("interject.sources.pubmed", "PubMedAdapter"),
+    "semantic_scholar": ("interject.sources.semantic_scholar", "SemanticScholarAdapter"),
+    "searxng": ("interject.sources.searxng", "SearXNGAdapter"),
 }
 
 

@@ -86,6 +86,27 @@ sources:
       - code analysis LLM tooling
       - developer workflow automation AI
 
+  tavily:
+    enabled: true
+    max_results: 20
+
+  brave:
+    enabled: true
+    max_results: 20
+
+  pubmed:
+    enabled: true
+    max_results: 30
+    courtesy_delay_seconds: 0.4
+
+  semantic_scholar:
+    enabled: true
+    max_results: 20
+
+  searxng:
+    enabled: true
+    max_results: 20
+
 # Interest profile seed topics (used until enough feedback exists)
 seed_topics:
   - MCP servers
