@@ -23,42 +23,55 @@ class OutputPipeline:
         self.docs_root = docs_root or Path("/root/projects/Interverse/docs")
         self.interverse_root = interverse_root or Path("/root/projects/Interverse")
 
-    def process(self, discovery: dict, tier: str) -> dict[str, Any]:
+    def process(
+        self, discovery: dict, tier: str, discovery_id: str | None = None
+    ) -> dict[str, Any]:
         """Process a scored discovery through the output pipeline.
 
         Args:
             discovery: Discovery dict from the database
             tier: Confidence tier ('high', 'medium', 'low')
+            discovery_id: Optional discovery ID for kernel linkage
 
         Returns:
-            Dict with keys: bead_id, briefing_path, brainstorm_path (if applicable)
+            Dict with keys: tier, kernel_discovery_id, bead_id,
+            briefing_path, brainstorm_path (if applicable)
         """
         result: dict[str, Any] = {"tier": tier}
 
+        # Submit to kernel for all tiers (durable record + events)
+        kernel_id = self._submit_to_kernel(discovery)
+        if kernel_id:
+            result["kernel_discovery_id"] = kernel_id
+
         if tier == "low":
-            # Record only — no external output
             return result
 
-        if tier in ("medium", "high"):
-            # Create bead
-            bead_id = self._create_bead(discovery, tier)
+        if tier == "medium":
+            bead_id = self._create_bead(discovery, tier, priority=4, labels=["pending_triage"])
             result["bead_id"] = bead_id
-
-            # Write briefing doc
             briefing_path = self._write_briefing(discovery)
             result["briefing_path"] = str(briefing_path)
 
-        if tier == "high":
-            # Write high-tier brainstorm doc
+        elif tier == "high":
+            bead_id = self._create_bead(discovery, tier, priority=2)
+            result["bead_id"] = bead_id
+            briefing_path = self._write_briefing(discovery)
+            result["briefing_path"] = str(briefing_path)
             brainstorm_path = self._write_brainstorm(discovery)
             result["brainstorm_path"] = str(brainstorm_path)
 
+        if kernel_id and result.get("bead_id"):
+            self._promote_in_kernel(kernel_id, result["bead_id"])
+
         return result
 
-    def _create_bead(self, discovery: dict, tier: str) -> str | None:
+    def _create_bead(
+        self, discovery: dict, tier: str,
+        priority: int = 2, labels: list[str] | None = None,
+    ) -> str | None:
         """Create a bead via bd CLI."""
         title = f"[interject] {discovery['title'][:80]}"
-        priority = 2 if tier == "high" else 3
         description = (
             f"Source: {discovery['source']} | {discovery['url']}\n\n"
             f"{discovery.get('summary', '')}\n\n"
@@ -66,15 +79,19 @@ class OutputPipeline:
             f"Discovered: {discovery.get('discovered_at', '')}"
         )
 
+        cmd = [
+            "bd", "create",
+            f"--title={title}",
+            "--type=task",
+            f"--priority={priority}",
+            f"--description={description}",
+        ]
+        if labels:
+            cmd.append(f"--labels={','.join(labels)}")
+
         try:
             result = subprocess.run(
-                [
-                    "bd", "create",
-                    f"--title={title}",
-                    "--type=task",
-                    f"--priority={priority}",
-                    f"--description={description}",
-                ],
+                cmd,
                 capture_output=True,
                 text=True,
                 cwd=str(self.interverse_root),
@@ -96,6 +113,92 @@ class OutputPipeline:
         except (subprocess.TimeoutExpired, FileNotFoundError) as e:
             logger.warning("Failed to create bead: %s", e)
         return None
+
+    def _submit_to_kernel(self, discovery: dict) -> str | None:
+        """Submit discovery to kernel via ic CLI. Returns kernel discovery ID or None."""
+        import json as _json
+        import os
+        import tempfile
+
+        cmd = [
+            "ic", "discovery", "submit",
+            f"--source={discovery['source']}",
+            f"--source-id={discovery.get('id', '')}",
+            f"--title={discovery['title'][:200]}",
+            f"--score={discovery.get('relevance_score', 0):.4f}",
+        ]
+
+        if discovery.get("summary"):
+            cmd.append(f"--summary={discovery['summary'][:500]}")
+        if discovery.get("url"):
+            cmd.append(f"--url={discovery['url']}")
+
+        embedding_path = None
+        metadata_path = None
+        try:
+            if discovery.get("embedding"):
+                fd, embedding_path = tempfile.mkstemp(suffix=".bin")
+                with os.fdopen(fd, "wb") as f:
+                    if isinstance(discovery["embedding"], bytes):
+                        f.write(discovery["embedding"])
+                    else:
+                        f.write(bytes(discovery["embedding"]))
+                cmd.append(f"--embedding={embedding_path}")
+
+            metadata = discovery.get("raw_metadata")
+            if metadata:
+                fd, metadata_path = tempfile.mkstemp(suffix=".json")
+                with os.fdopen(fd, "w") as f:
+                    if isinstance(metadata, str):
+                        f.write(metadata)
+                    else:
+                        _json.dump(metadata, f)
+                cmd.append(f"--metadata={metadata_path}")
+
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=10,
+            )
+
+            if result.returncode == 0:
+                kernel_id = result.stdout.strip()
+                logger.info("Submitted to kernel: %s -> %s", discovery.get("id"), kernel_id)
+                return kernel_id
+            else:
+                logger.warning("ic discovery submit failed (rc=%d): %s", result.returncode, result.stderr)
+
+        except FileNotFoundError:
+            logger.warning("ic CLI not found — kernel submit skipped (install intercore)")
+        except subprocess.TimeoutExpired:
+            logger.warning("ic discovery submit timed out")
+        finally:
+            if embedding_path:
+                try:
+                    os.unlink(embedding_path)
+                except OSError:
+                    pass
+            if metadata_path:
+                try:
+                    os.unlink(metadata_path)
+                except OSError:
+                    pass
+
+        return None
+
+    def _promote_in_kernel(self, kernel_discovery_id: str, bead_id: str) -> bool:
+        """Link kernel discovery record to bead via ic discovery promote."""
+        try:
+            result = subprocess.run(
+                ["ic", "discovery", "promote", kernel_discovery_id, f"--bead-id={bead_id}"],
+                capture_output=True, text=True, timeout=10,
+            )
+            if result.returncode == 0:
+                logger.info("Kernel promote: %s -> %s", kernel_discovery_id, bead_id)
+                return True
+            else:
+                logger.warning("ic discovery promote failed (rc=%d): %s", result.returncode, result.stderr)
+        except (FileNotFoundError, subprocess.TimeoutExpired) as e:
+            logger.warning("ic discovery promote skipped: %s", e)
+        return False
 
     def _write_briefing(self, discovery: dict) -> Path:
         """Write a briefing doc to docs/research/."""

@@ -160,12 +160,12 @@ class Scanner:
 
                     # Process through output pipeline
                     output_result = self.outputs.process(
-                        self.db.get_discovery(disc_id), tier
+                        self.db.get_discovery(disc_id), tier, discovery_id=disc_id
                     )
 
                     # Record promotion if bead was created
                     if output_result.get("bead_id"):
-                        priority = 2 if tier == "high" else 3
+                        priority = 2 if tier == "high" else (4 if tier == "medium" else 3)
                         self.db.record_promotion(
                             disc_id, output_result["bead_id"], priority
                         )

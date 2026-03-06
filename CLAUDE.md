@@ -6,6 +6,15 @@ Ambient discovery and research engine. Scans arXiv, Hacker News, GitHub, Anthrop
 
 Python MCP server at `src/interject/server.py`. Run with `uv run interject-mcp`.
 
+## Kernel-Native Plugin
+
+Interject is a **kernel-native** plugin (see PHILOSOPHY.md § Plugin Tiers). It requires intercore (`ic` CLI) for full functionality. Without intercore, scans still work but discoveries won't produce kernel records, events, or feedback loop data.
+
+Key integration points:
+- `outputs.py` calls `ic discovery submit` after scoring (all tiers)
+- `outputs.py` calls `ic discovery promote` after bead creation (medium+high)
+- `/interject:triage` calls `ic discovery feedback` for closed-loop learning
+
 ## Key Files
 
 - `src/interject/server.py` — MCP server entrypoint (FastMCP, 10 tools)
