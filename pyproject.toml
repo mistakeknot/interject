@@ -20,7 +20,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "intersearch @ file:///home/mk/projects/Demarch/interverse/intersearch",
+    "intersearch",
     "mcp>=1.0.0",
     "aiohttp>=3.9",
     "pyyaml>=6.0",
@@ -39,8 +39,8 @@ interject-scan = "interject.scanner:main"
 Homepage = "https://github.com/mistakeknot/interject"
 Repository = "https://github.com/mistakeknot/interject"
 
-[tool.hatch.metadata]
-allow-direct-references = true
+[tool.uv.sources]
+intersearch = { path = "../intersearch", editable = true }
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/interject"]
