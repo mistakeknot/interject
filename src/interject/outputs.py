@@ -428,7 +428,7 @@ def _priority_hint(tier: str) -> str:
     """Return a priority suggestion based on confidence tier."""
     hints = {
         "high": "High (P2 bead by default)",
-        "medium": "Medium (P3 bead by default)",
+        "medium": "Medium (P4 bead by default)",
         "low": "Low (record-only unless manually promoted)",
     }
     return hints.get(tier, "Unspecified")
