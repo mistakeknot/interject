@@ -702,7 +702,7 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.9" },
-    { name = "intersearch", editable = "../intersearch" },
+    { name = "intersearch", git = "https://github.com/mistakeknot/intersearch.git" },
     { name = "mcp", specifier = ">=1.0.0" },
     { name = "numpy", specifier = ">=1.26" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8.0" },
@@ -715,7 +715,7 @@ provides-extras = ["test"]
 [[package]]
 name = "intersearch"
 version = "0.2.0"
-source = { editable = "../intersearch" }
+source = { git = "https://github.com/mistakeknot/intersearch.git#0699a325c043e46e5490f106ad73b553e828fe33" }
 dependencies = [
     { name = "aiohttp" },
     { name = "einops" },
@@ -724,18 +724,6 @@ dependencies = [
     { name = "numpy", version = "2.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "sentence-transformers" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "aiohttp", specifier = ">=3.9" },
-    { name = "einops", specifier = ">=0.7" },
-    { name = "mcp", specifier = ">=1.0" },
-    { name = "numpy", specifier = ">=1.26" },
-    { name = "pytest", marker = "extra == 'test'", specifier = ">=8.0" },
-    { name = "pytest-asyncio", marker = "extra == 'test'", specifier = ">=0.23" },
-    { name = "sentence-transformers", specifier = ">=2.7" },
-]
-provides-extras = ["test"]
 
 [[package]]
 name = "jinja2"

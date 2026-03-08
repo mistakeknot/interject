@@ -40,7 +40,7 @@ Homepage = "https://github.com/mistakeknot/interject"
 Repository = "https://github.com/mistakeknot/interject"
 
 [tool.uv.sources]
-intersearch = { path = "../intersearch", editable = true }
+intersearch = { git = "https://github.com/mistakeknot/intersearch.git" }
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/interject"]
