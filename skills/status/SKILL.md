@@ -1,16 +1,16 @@
 ---
-name: status
+name: interject-status
 description: Dashboard of scan health, recommendation stats, and adapter status
 user_invocable: true
 ---
 
-# /interject:status
+# /interject:interject-status
 
 Show the Interject system health dashboard.
 
 ## Usage
 
-When the user invokes `/interject:status`, use the `interject_status` MCP tool.
+When the user invokes `/interject:interject-status`, use the `interject_status` MCP tool.
 
 ## Behavior
 
