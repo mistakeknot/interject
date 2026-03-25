@@ -3,7 +3,8 @@
 # Only surfaces high-confidence discoveries above the learned threshold.
 # Silent when nothing important.
 
-set -euo pipefail
+set -uo pipefail
+trap 'exit 0' ERR
 
 # This hook is called by Claude Code at session start.
 # It checks the Interject inbox for high-priority discoveries.
