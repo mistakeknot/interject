@@ -33,6 +33,3 @@ Key integration points:
 
 - `intersearch` — shared Exa and embedding infrastructure (path dependency)
 
-## Plugin Publishing
-
-Use `/interpub:release <version>` or `scripts/bump-version.sh <version>`.
