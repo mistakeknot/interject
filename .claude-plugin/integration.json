@@ -1,0 +1,9 @@
+{
+  "name": "interject",
+  "companions": {
+    "recommended": [
+      "intercheck"
+    ],
+    "optional": []
+  }
+}

@@ -37,8 +37,5 @@
         "SEARXNG_URL": "${SEARXNG_URL}"
       }
     }
-  },
-  "peerDependencies": [
-    "intercheck"
-  ]
+  }
 }
